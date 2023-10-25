@@ -1,0 +1,11 @@
+
+#griddiv {
+    display:grid;
+    grid-template-columns: repeat(7,1fr);
+}
+
+#griddiv div{
+    aspect-ratio: 1;
+    border-color:black;
+    border-style:solid;
+}
