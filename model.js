@@ -12,7 +12,9 @@ export class Model {
         this.letters = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(""));
         console.log(this.letters);
 
+        // Two-dimensional Array indicating the region number of a field (for one single big region)
         this.regionNumber = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
+        // Number of regions
         this.numRegions = 1;
         this.initGrid();
     }
@@ -174,6 +176,29 @@ export class Model {
             for (let x=0; x<this.width; x++) {
                 let color = `hsl(${360/this.numRegions*this.regionNumber[x][y]} 100% 50%)`;
                 this.divs[x][y].style.backgroundColor=color;
+            }
+        }
+    }
+
+    fillRegions(wordlist) {
+        for (let r=0; r<this.numRegions; r++) {
+            let numLetters=0;
+            for (let y=0; y<this.height; y++) {
+                for (let x=0; x<this.width; x++) {
+                    if (this.regionNumber[x][y]==r) {
+                        numLetters++;
+                    }
+                }
+            }
+            let word = wordlist.randomWord(numLetters);
+            numLetters=0;
+            for (let y=0; y<this.height; y++) {
+                for (let x=0; x<this.width; x++) {
+                    if (this.regionNumber[x][y]==r) {
+                        this.divs[x][y].innerText = word[numLetters].toUpperCase();
+                        numLetters++;
+                    }
+                }
             }
         }
     }

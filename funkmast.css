@@ -4,8 +4,14 @@
     grid-template-columns: repeat(7,1fr);
 }
 
-#griddiv div{
+#griddiv > div{
+    display:flex;
+    align-items: center;
+    justify-content: center;
     aspect-ratio: 1;
     border-color:black;
     border-style:solid;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size:8vw;
 }
