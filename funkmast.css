@@ -1,7 +1,7 @@
 
 #griddiv {
     display:grid;
-    grid-template-columns: repeat(7,1fr);
+    grid-template-columns: repeat(5,1fr);
 }
 
 #griddiv > div{
@@ -11,7 +11,20 @@
     aspect-ratio: 1;
     border-color:black;
     border-style:solid;
+    border-width: 1px;
     font-family: sans-serif;
     font-weight: bold;
     font-size:8vw;
+}
+
+@media print {
+    #griddiv {
+        width:40%;
+    }
+    #griddiv > div {
+        font-size:4vw;
+    }
+    #knopf{
+        display:none;
+    }
 }

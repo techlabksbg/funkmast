@@ -171,16 +171,20 @@ export class Model {
         return true;
     }
 
-    showRegions() {
+    showRegions(clear = false) {
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {
-                let color = `hsl(${360/this.numRegions*this.regionNumber[x][y]} 100% 50%)`;
+                let color = clear ? "white" : `hsl(${360/this.numRegions*this.regionNumber[x][y]} 100% 50%)`;
                 this.divs[x][y].style.backgroundColor=color;
             }
         }
     }
 
+
+
     fillRegions(wordlist) {
+        let numPerLength = new Array(9).fill(0);
+        let numLettersPerRegion = [];
         for (let r=0; r<this.numRegions; r++) {
             let numLetters=0;
             for (let y=0; y<this.height; y++) {
@@ -190,17 +194,61 @@ export class Model {
                     }
                 }
             }
-            let word = wordlist.randomWord(numLetters);
-            numLetters=0;
+            numLettersPerRegion[r] = numLetters;
+            numPerLength[numLetters]++;
+        }
+        let lenlist = wordlist.randomCollection(numPerLength);
+        console.log(numPerLength);
+        console.log(lenlist);
+        for (let r=0; r<this.numRegions; r++) {
+            console.log(`Take one of ${lenlist[numLettersPerRegion[r]]}`);
+            let word = lenlist[numLettersPerRegion[r]].splice(0,1)[0];
+            console.log(word);
+            let numLetters = 0;
             for (let y=0; y<this.height; y++) {
                 for (let x=0; x<this.width; x++) {
                     if (this.regionNumber[x][y]==r) {
-                        this.divs[x][y].innerText = word[numLetters].toUpperCase();
+                        let c = word[numLetters].toUpperCase();
+                        this.letters[x][y] = c;
+                        this.divs[x][y].innerText = c;
                         numLetters++;
                     }
                 }
             }
         }
+    }
+
+    // Work in progress: Attempt to solve a puzzle
+    placeNextWord(used, nr) {
+        let firstempty = -1;
+        for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {
+                if (used[x][y]==-1) {
+                    firstempty = [x,y];
+                    break;
+                }
+            }
+            if (firstempty!=-1) break;
+        }
+        
+    }
+
+
+    // Work in progress: Attempt to solve a puzzle
+    solve(wordlist) {
+        let prefixtree = {};
+        for (let word of wordlist.list) {
+            let t = prefixtree;
+            for (const c of word) {
+                if (!(c in t)) {
+                    t[c] = {};
+                } 
+                t=t[c];
+            }
+            t['_']=0;
+        }
+        let used = new Array(this.width).fill(0).map((e)=> new Array(this.height).fill(-1));
+
     }
 
 };
