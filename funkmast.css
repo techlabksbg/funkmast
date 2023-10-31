@@ -1,7 +1,7 @@
 
 #griddiv {
     display:grid;
-    grid-template-columns: repeat(5,1fr);
+    grid-template-columns: repeat(var(--spalten),1fr);
 }
 
 #griddiv > div{

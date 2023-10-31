@@ -5,12 +5,13 @@ export class Model {
     constructor(width, height) {
         this.width = width;
         this.height = height;
+        this.minchars = 4;
+        this.maxchars = 8;
         this.wordlist = new WordList();
         this.griddiv = document.getElementById("griddiv");
 
         // Two-dimensional Array letters[x][y], x is the column, y the row
         this.letters = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(""));
-        console.log(this.letters);
 
         // Two-dimensional Array indicating the region number of a field (for one single big region)
         this.regionNumber = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
@@ -20,6 +21,7 @@ export class Model {
     }
 
     initGrid() {
+        document.body.style.setProperty("--spalten", this.width);
         this.griddiv.innerHTML = "";  // Clear grid
         // Generate new divs in a two dimensional array
         this.divs = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0).map((e,i)=>{
@@ -123,9 +125,9 @@ export class Model {
         this.numRegions = 1;
         let sizes = [n];
         let bailout = 20;
-        while (Math.max(...sizes)>8) {
+        while (Math.max(...sizes)>this.maxchars) {
             bailout--;
-            if (bailout<=0) break;
+            if (bailout<=0) return false;
             //console.log(sizes);
             //console.log(Math.max(...sizes));
             let e = Math.floor(Math.random()*tree.length);
@@ -135,7 +137,7 @@ export class Model {
                 let su = this.getTreeSize(nbrs, u, v);
                 let sv = this.getTreeSize(nbrs, v, u);
                 //console.log(`Splitting at edge e=${e} nodes ${u},${v}, sizes ${sv} and ${su}`);
-                if (su>3 && sv>3) {
+                if (su>=this.minchars && sv>=this.minchars) {
                     // Remove edge from tree
                     tree.splice(e,1);
                     // Remove edge from neighbors
@@ -183,7 +185,7 @@ export class Model {
 
 
     fillRegions(wordlist) {
-        let numPerLength = new Array(9).fill(0);
+        let numPerLength = new Array(this.maxchars+1).fill(0);
         let numLettersPerRegion = [];
         for (let r=0; r<this.numRegions; r++) {
             let numLetters=0;
@@ -198,12 +200,8 @@ export class Model {
             numPerLength[numLetters]++;
         }
         let lenlist = wordlist.randomCollection(numPerLength);
-        console.log(numPerLength);
-        console.log(lenlist);
         for (let r=0; r<this.numRegions; r++) {
-            console.log(`Take one of ${lenlist[numLettersPerRegion[r]]}`);
             let word = lenlist[numLettersPerRegion[r]].splice(0,1)[0];
-            console.log(word);
             let numLetters = 0;
             for (let y=0; y<this.height; y++) {
                 for (let x=0; x<this.width; x++) {
