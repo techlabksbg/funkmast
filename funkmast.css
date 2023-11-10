@@ -24,7 +24,7 @@
     #griddiv > div {
         font-size:4vw;
     }
-    #knopf{
+    #knopf, #solve{
         display:none;
     }
 }

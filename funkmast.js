@@ -9,8 +9,16 @@ window.addEventListener('load', function() {
     let model = new Model(7, 12);
     //let model = new Model(5, 7);
     model.randomRegions();
-    model.showRegions(false);
-    model.fillRegions(wordlist);
-    model.showRegions(false);
-    //model.solve(wordlist);
+    while (true) {
+        model.fillRegions(wordlist);
+        if (model.solve(wordlist)==1) {
+            break;
+        }
+    }
+    model.showRegions(true);
+    
+    this.document.getElementById('solve').addEventListener('click', ()=>{
+        model.showRegions(false);
+    });
+
 })

@@ -57,6 +57,31 @@ export class Model {
         });
     }
 
+
+    regionsToString(regions) {
+        let str = "";
+        for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {
+                str+= "+";
+                if (y==0 || regions[x][y]!=regions[x][y-1]) {
+                    str += "---"
+                } else {
+                    str += "   "
+                }
+            }
+            str+="\n"
+            for (let x=0; x<this.width; x++) {
+                if (x==0 || regions[x][y]!=regions[x-1][y]) {
+                    str += `| ${this.letters[x][y]} `
+                } else {
+                    str += `  ${this.letters[x][y]} `
+                }
+            }
+            str+="\n";
+        }
+        return str;
+    }
+
     nbrsToString(nbrs) {
         let str = "";
         for (let y=0; y<this.height; y++) {
@@ -206,9 +231,9 @@ export class Model {
             for (let y=0; y<this.height; y++) {
                 for (let x=0; x<this.width; x++) {
                     if (this.regionNumber[x][y]==r) {
-                        let c = word[numLetters].toUpperCase();
+                        let c = word[numLetters];
                         this.letters[x][y] = c;
-                        this.divs[x][y].innerText = c;
+                        this.divs[x][y].innerText = c.toUpperCase();
                         numLetters++;
                     }
                 }
@@ -216,8 +241,75 @@ export class Model {
         }
     }
 
+    // check if the cells denoted by the coordinates in the array coords are all connected
+    connected(coords) {
+        let ok = new Array(coords.length).fill(false);
+        ok[0] = true;
+        let okCount = 1;
+        let todo = [0];
+        while (todo.length>0) {
+            let i = todo.pop()
+            for (let j=0; j<coords.length; j++) {
+                if (!ok[j] && Math.abs(coords[i][0]-coords[j][0])+Math.abs(coords[i][1]-coords[j][1]) == 1) {
+                    ok[j] = true;
+                    okCount++;
+                    todo.push(j);
+                }
+            }
+        }
+        return okCount==coords.length
+    }
+
+    getWordFound(curUsed) {
+        let word = "";
+        for (let i=0; i<curUsed.length; i++) {
+            word += this.letters[curUsed[i][0]][curUsed[i][1]];
+        }
+        return word;
+    }
+
+    // used[x][y]==-1 for unused cells
+    // curUsed is an Array of [x,y] coordinates, denoting the cells chosen for a word
+    // pft is the current prefix tree.
+    //
+    //  TODO: optimize this for obviously non-connected regions
+    //
+    tryNextLetter(used, curUsed, pft) {
+        let found = [];
+        for (let letter in pft) {
+            if (letter=='_') {
+                if (this.connected(curUsed)) {
+                    //console.log(`Found word ${this.getWordFound(curUsed)}`);
+                    found.push(curUsed.map((e)=>e));
+                }
+            }
+            let [x,y] = curUsed[curUsed.length-1];
+            let starty = y;
+            //console.log(`Trying ${letter} at ${x},${y}, word so far: ${this.getWordFound(curUsed)}`);
+            while (true) {
+                x+=1;
+                if (x>=this.width) {
+                    x = 0;
+                    y++;
+                    if (y>=this.height || y>starty+1) {
+                        break;
+                    }
+                }
+                if (used[x][y]==-1 && this.letters[x][y]==letter) {
+                    curUsed.push([x,y])
+                    found = found.concat(this.tryNextLetter(used, curUsed, pft[letter]));
+                    curUsed.pop()
+                }
+            }
+        }
+        return found;
+    }
+
     // Work in progress: Attempt to solve a puzzle
-    placeNextWord(used, nr) {
+    // used[x][y] denotes already used places
+    // returns 0 if no word can be placed
+    // or the number of solutions (will bail after 2 solutions found)
+    placeNextWord(used, pft, curRegion=0) {
         let firstempty = -1;
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {
@@ -228,7 +320,32 @@ export class Model {
             }
             if (firstempty!=-1) break;
         }
-        
+        // all full? So this one solution, so return it.
+        if (firstempty==-1) {
+            console.log(this.regionsToString(used));
+            return 1;      
+        }
+        let [x,y] = firstempty;
+        let curUsed = [[x,y]];
+        let numSol = 0;
+        //console.log(`Attempt to place at ${x},${y} with letter ${this.letters[x][y]}`);
+        if (this.letters[x][y] in pft) {
+            let words = this.tryNextLetter(used, curUsed, pft[this.letters[x][y]]);
+            for (let word of words) {
+                for (let p of word) {
+                    used[p[0]][p[1]] = curRegion
+                }
+                numSol += this.placeNextWord(used, pft, curRegion+1);
+                //if (numSol>1) return numSol; // Bail if two solutions have been found
+                for (let p of word) {
+                    used[p[0]][p[1]] = -1;
+                }
+            }
+            return numSol;
+        } else {
+            console.log("I have no words...")
+            return 0;
+        }
     }
 
 
@@ -246,7 +363,9 @@ export class Model {
             t['_']=0;
         }
         let used = new Array(this.width).fill(0).map((e)=> new Array(this.height).fill(-1));
-
+        let n = this.placeNextWord(used, prefixtree);
+        console.log(`Total of ${n} solutions`);
+        return n;
     }
 
 };
