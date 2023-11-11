@@ -2,6 +2,7 @@
 #griddiv {
     display:grid;
     grid-template-columns: repeat(var(--spalten),1fr);
+    width: min(50vh, 100vw);
 }
 
 #griddiv > div{
@@ -14,7 +15,7 @@
     border-width: 1px;
     font-family: sans-serif;
     font-weight: bold;
-    font-size:8vw;
+    font-size: min(4vh, 8vw);
 }
 
 @media print {
@@ -22,7 +23,7 @@
         width:40%;
     }
     #griddiv > div {
-        font-size:4vw;
+        font-size:3vw;
     }
     #knopf, #solve{
         display:none;

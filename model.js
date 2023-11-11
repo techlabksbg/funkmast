@@ -109,7 +109,13 @@ export class Model {
     }
 
     randomRegions() {
-        while (!this.maybeRandomRegions());
+        let bailout = 100;
+        while (!this.maybeRandomRegions()) {
+            bailout--;
+            if (bailout<=0) {
+                throw "Could not partition in to regions"
+            }
+        }
     }
 
     // Generates random, connected regions of minimal size 4 and
@@ -149,7 +155,7 @@ export class Model {
         let regnum = new Array(n).fill(0); // Single component
         this.numRegions = 1;
         let sizes = [n];
-        let bailout = 20;
+        let bailout = n;
         while (Math.max(...sizes)>this.maxchars) {
             bailout--;
             if (bailout<=0) return false;
@@ -183,7 +189,7 @@ export class Model {
                 }
                 e = (e+1) % tree.length;
                 if (starte==e) {
-                    console.log("No way!");
+                    // console.log("No way!");
                     return false;
                 }
             }
@@ -320,9 +326,9 @@ export class Model {
             }
             if (firstempty!=-1) break;
         }
-        // all full? So this one solution, so return it.
+        // all full? So this is one solution, so return it.
         if (firstempty==-1) {
-            console.log(this.regionsToString(used));
+            //console.log(this.regionsToString(used));
             return 1;      
         }
         let [x,y] = firstempty;
@@ -331,19 +337,24 @@ export class Model {
         //console.log(`Attempt to place at ${x},${y} with letter ${this.letters[x][y]}`);
         if (this.letters[x][y] in pft) {
             let words = this.tryNextLetter(used, curUsed, pft[this.letters[x][y]]);
+            if (words.length>0) {
+                this.wordCountSum += words.length;
+                this.numWordcounts++;
+            }
             for (let word of words) {
                 for (let p of word) {
                     used[p[0]][p[1]] = curRegion
                 }
+                //console.log(this.regionsToString(used));
                 numSol += this.placeNextWord(used, pft, curRegion+1);
-                //if (numSol>1) return numSol; // Bail if two solutions have been found
+                if (numSol>1) return numSol; // Bail if two solutions have been found
                 for (let p of word) {
                     used[p[0]][p[1]] = -1;
                 }
             }
             return numSol;
         } else {
-            console.log("I have no words...")
+            //console.log("I have no words...")
             return 0;
         }
     }
@@ -363,8 +374,10 @@ export class Model {
             t['_']=0;
         }
         let used = new Array(this.width).fill(0).map((e)=> new Array(this.height).fill(-1));
+        this.numWordcounts = 0;
+        this.wordCountSum = 0;
         let n = this.placeNextWord(used, prefixtree);
-        console.log(`Total of ${n} solutions`);
+        //console.log(`Total of ${n} solutions, total Wordcount=${this.wordCountSum}, mean wordcount=${this.wordCountSum/this.numWordcounts}`);
         return n;
     }
 
