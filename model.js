@@ -8,7 +8,6 @@ export class Model {
         this.minchars = 4;
         this.maxchars = 8;
         this.wordlist = new WordList();
-        this.griddiv = document.getElementById("griddiv");
 
         // Two-dimensional Array letters[x][y], x is the column, y the row
         this.letters = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(""));
@@ -17,23 +16,6 @@ export class Model {
         this.regionNumber = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
         // Number of regions
         this.numRegions = 1;
-        this.initGrid();
-    }
-
-    initGrid() {
-        document.body.style.setProperty("--spalten", this.width);
-        this.griddiv.innerHTML = "";  // Clear grid
-        // Generate new divs in a two dimensional array
-        this.divs = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0).map((e,i)=>{
-            let d = document.createElement('div');
-            return d;
-        }));
-        // Append the divs in the right order
-        for (let y=0; y<this.height; y++) {
-            for (let x=0; x<this.width; x++) {
-                this.griddiv.appendChild(this.divs[x][y]);
-            }
-        }
     }
 
     // Gets the size of tree at node cur, when ignoring the edge between cur and prev
@@ -204,18 +186,8 @@ export class Model {
         return true;
     }
 
-    showRegions(clear = false) {
-        for (let y=0; y<this.height; y++) {
-            for (let x=0; x<this.width; x++) {
-                let color = clear ? "white" : `hsl(${360/this.numRegions*this.regionNumber[x][y]} 100% 50%)`;
-                this.divs[x][y].style.backgroundColor=color;
-            }
-        }
-    }
 
-
-
-    fillRegions(wordlist) {
+    fillRegions() {
         let numPerLength = new Array(this.maxchars+1).fill(0);
         let numLettersPerRegion = [];
         for (let r=0; r<this.numRegions; r++) {
@@ -230,7 +202,7 @@ export class Model {
             numLettersPerRegion[r] = numLetters;
             numPerLength[numLetters]++;
         }
-        let lenlist = wordlist.randomCollection(numPerLength);
+        let lenlist = this.wordlist.randomCollection(numPerLength);
         for (let r=0; r<this.numRegions; r++) {
             let word = lenlist[numLettersPerRegion[r]].splice(0,1)[0];
             let numLetters = 0;
@@ -239,7 +211,6 @@ export class Model {
                     if (this.regionNumber[x][y]==r) {
                         let c = word[numLetters];
                         this.letters[x][y] = c;
-                        this.divs[x][y].innerText = c.toUpperCase();
                         numLetters++;
                     }
                 }
@@ -361,9 +332,9 @@ export class Model {
 
 
     // Work in progress: Attempt to solve a puzzle
-    solve(wordlist) {
+    solve() {
         let prefixtree = {};
-        for (let word of wordlist.list) {
+        for (let word of this.wordlist.list) {
             let t = prefixtree;
             for (const c of word) {
                 if (!(c in t)) {
