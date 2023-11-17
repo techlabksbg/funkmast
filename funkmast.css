@@ -18,6 +18,10 @@
     font-size: min(4vh, 8vw);
 }
 
+.selected {
+    background-color: red;
+}
+
 @media print {
     #griddiv {
         width:40%;
