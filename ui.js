@@ -17,9 +17,111 @@ export class UI {
         this.activey = undefined;
     }
 
+    // nbrs is 3x3-Array with true/false if nbrs are present or not
+    // selected is true/false
+    makeSVG(selected, color, nbrs = [[false, false, false],[false, true, false], [false, false, false]]) {
+
+        const top = nbrs[1][0],
+            bottom = nbrs[1][2],
+            left = nbrs[0][1],
+            right = nbrs[2][1],
+            topleft = nbrs[0][0],
+            topright = nbrs[2][0],
+            bottomleft = nbrs[0][2],
+            bottomright = nbrs[2][2];
+
+        // From https://stackoverflow.com/questions/13069446/simple-fill-pattern-in-svg-diagonal-hatching
+        let filldef = !selected ? "" : '<pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="25" height="25"><rect x="-1" y="-1" width="27" height="27" fill="'+color+'" fill-rule="evenodd"/><path d="M-1,1 l2,-2 M0,25 l25,-25 M24,26 l2,-2" style="stroke:#ffffff88; stroke-width:8" /> </pattern>';
+        let fillUse = !selected ? color : "url(#diagonalHatch)"
+
+        const margin = 10;
+
+
+        let path = [];
+
+        //////////////////////////////////////
+        // Foreign code, license unclear
+        // shamelessly copied from https://www.andrewt.net/puzzles/cell-tower/player/common/blob-svg.js
+        ////////////////////////////////////////////
+
+        // start in top left
+        if (top) path.push(`M ${left ? -margin : margin} ${-margin}`);
+        else path.push(`M ${left ? -margin : margin * 2} ${margin}`);
+
+        // draw top edge and top right corner
+        if (top && right && !topright) path.push(
+            `L ${100 - margin} ${-margin}`,
+            `L ${100 - margin} 0`,
+            `A ${margin} ${margin} 0 0 0 100 ${margin}`,
+            `L ${100 + margin} ${margin}`,
+        );
+        else if (right) path.push(`L ${100 + margin} ${top ? -margin : margin}`);
+        else if (top) path.push(`L ${100 - margin} ${-margin}`);
+        else path.push(
+            `L ${100 - margin * 2} ${margin}`,
+            `A ${margin} ${margin} 0 0 1 ${100 - margin} ${margin * 2}`
+        );
+
+        // draw right edge and bottom right corner
+        if (bottom && right && !bottomright) path.push(
+            `L ${100 + margin} ${100 - margin}`,
+            `L 100 ${100 - margin}`,
+            `A ${margin} ${margin} 0 0 0 ${100 - margin} 100`,
+            `L ${100 - margin} ${100 + margin}`,
+        );
+        else if (bottom) path.push(`L ${right ? 100 + margin : 100 - margin} ${100 + margin}`);
+        else if (right) path.push(`L ${100 + margin} ${100 - margin}`);
+        else path.push(
+            `L ${100 - margin} ${100 - margin * 2}`,
+            `A ${margin} ${margin} 0 0 1 ${100 - margin * 2} ${100 - margin}`
+        );
+
+        // draw bottom edge and bottom left corner
+        if (bottom && left && !bottomleft) path.push(
+            `L ${margin} ${100 + margin}`,
+            `L ${margin} 100`,
+            `A ${margin} ${margin} 0 0 0 0 ${100 - margin}`,
+            `L ${-margin} ${100 - margin}`,
+        );
+        else if (left) path.push(`L ${-margin} ${bottom ? 100 + margin : 100 - margin}`);
+        else if (bottom) path.push(`L ${margin} ${100 + margin}`);
+        else path.push(
+            `L ${margin * 2} ${100 - margin}`,
+            `A ${margin} ${margin} 0 0 1 ${margin} ${100 - margin * 2}`
+        );
+
+        // draw left edge and top left corner
+        if (top && left && !topleft) path.push(
+            `L ${-margin} ${margin}`,
+            `L 0 ${margin}`,
+            `A ${margin} ${margin} 0 0 0 ${margin} 0`,
+            `L ${margin} ${-margin}`,
+        );
+        else if (top || left) path.push(`Z`);
+        else path.push(
+            `L ${margin} ${margin * 2}`,
+            `A ${margin} ${margin} 0 0 1 ${margin * 2} ${margin}`
+        );
+
+        let svg = `<svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        ${filldef}
+		<g stroke="none" fill="#000000" fill-rule="evenodd">
+			<rect x="-5" y="-5" width="110" height="110"></rect>
+		</g>
+		<path
+			stroke="none"
+			fill="${fillUse}" fill-rule="evenodd"
+			d="${path.join(' ')}"
+		/>
+        </svg>`;
+        ///////////////////////////////////////////
+        // End of foreign code
+        //////////////////////////////////////////
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    }
+
+
     initEventHandlers(el) {
-
-
 
         // mode is one of "none", "adding" and "removing". Ending a drag resets the mode to "none".
         // selecting an empty cell starts ADDING, clears the selection if not connected
@@ -164,10 +266,10 @@ export class UI {
 
 
         let activate = (el)=>{
-            let x = el.getAttribute('x');
-            let y = el.getAttribute('y');
+            let x = Number(el.getAttribute('x'));
+            let y = Number(el.getAttribute('y'));
             let region = el.getAttribute('region');
-            console.log(`activate at ${x},${y} with region==${region} in mode=${this.mode} and selection=${this.selection}`);
+            console.log(`activate at ${x},${y} with region==${region} in mode=${this.mode}, remove=${this.regionRemove} and selection=${this.selection}`);
             if (this.mode=="none") {
                 if (region==-1) { // empty cell
                     this.mode = "adding";
@@ -198,6 +300,16 @@ export class UI {
                     showValidWord();
                     this.regionRemove = false;
                 } else if (region>=0) { // existing word
+                    if (this.selectionValid) {
+                        if (this.regionRemove) {
+                            clearSelection();
+                        } else {
+                            setRegion();
+                        }
+                    }
+                    if (this.selection.length==0) {
+                        this.regionRemove = true;
+                    }
                     if (!this.model.connected(this.selection.concat(getRegionList(region)))) {
                         clearSelection();
                         this.regionRemove = true;
@@ -217,7 +329,7 @@ export class UI {
                     showValidWord();
                 }
             }
-           
+            this.showRegions();
         };
 
         let ev = (el)=>{
@@ -226,8 +338,8 @@ export class UI {
                 this.activey = undefined;
                 this.mode = "none";
             } else {
-                let x = el.getAttribute('x');
-                let y = el.getAttribute('y');
+                let x = Number(el.getAttribute('x'));
+                let y = Number(el.getAttribute('y'));
                 
                 if (this.activex===undefined || this.activex!=x || this.activey!=y) {
                     this.activex = x;
@@ -304,20 +416,50 @@ export class UI {
                 this.divs[x][y].setAttribute('y', y);
                 this.divs[x][y].setAttribute('region', -1);
                 this.divs[x][y].innerText = this.model.letters[x][y].toUpperCase();
+                this.divs[x][y].style.backgroundImage = this.makeSVG(false, "#aaaaaa");
                 this.griddiv.appendChild(this.divs[x][y]);
             }
         }
     }
 
-    showRegions(clear = false) {
-        for (let y=0; y<this.height; y++) {
-            for (let x=0; x<this.width; x++) {
-                if (clear) {
-                    this.divs[x][y].style.backgroundColor="";
-                } else {
-                    let color = `hsl(${360/this.model.numRegions*this.model.regionNumber[x][y]} 100% 50%)`;
-                    this.divs[x][y].style.backgroundColor=color;
+    makeNbrList(x,y) {
+        let nbrs = [[false, false, false], [false, false, false], [false, false, false]];
+        let region = this.divs[x][y].getAttribute('region');
+        if (region==-1) return nbrs;
+        for (let dx=-1; dx<2; dx++) {
+            for (let dy=-1; dy<2; dy++) {
+                let a = x+dx;
+                let b = y+dy;
+                if (a>=0 && b>=0 && a<this.width && b<this.height) {
+                    nbrs[dx+1][dy+1] = (this.divs[a][b].getAttribute('region')==region);
                 }
+            }
+        }
+        return nbrs;
+    }
+
+    showRegions() {
+        for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {                
+                let nbrs = this.makeNbrList(x,y);
+                let region = this.divs[x][y].getAttribute('region');
+                let color = "#aaaaaa";
+                if (region==-2) {
+                    color = this.selectionValid ? "#00ff00" : "#ff0000";
+                }
+                if (region>=0) {
+                    color = `hsl(${360/10*region+20} 100% 50%)`;
+                }
+                console.log(`${x},${y} color=${color}, nbrs=${nbrs}`);
+                let svg = this.makeSVG(region==-2, color, nbrs);
+                let update = function(url, div) {
+                    let i = new Image();
+                    i.addEventListener('load', ()=>{
+                        div.style.backgroundImage = `url('${url}')`;
+                    }, {once:true});
+                    i.src = url;
+                };
+                update(svg, this.divs[x][y]);
             }
         }
     }

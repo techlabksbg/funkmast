@@ -1,0 +1,10 @@
+git commit ...
+git tag -a 'a2' -m 'region generation working, now add words'
+git push
+git push --tags
+
+
+# Delete tags
+git tag -d tag_name
+git push --delete origin tagname
+
