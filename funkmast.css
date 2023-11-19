@@ -22,6 +22,14 @@
     background-color: red;
 }
 
+.isWord {
+    filter: blur(5px);
+}
+
+.realWord {
+    background-color: green;
+}
+
 @media print {
     #griddiv {
         width:40%;
