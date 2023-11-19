@@ -1,4 +1,6 @@
 import { WordList } from "./wordlist.js";
+//
+// TODO: Random generator seeded from time (2 mins intervals)
 
 export class Model {
 

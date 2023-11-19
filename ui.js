@@ -1,5 +1,8 @@
 import {makeSVG} from "./makesvg.js"
 
+// TODO
+// submit missing and bad words
+//
 export class UI {
     
     constructor(model) {
@@ -12,6 +15,8 @@ export class UI {
         this.mode = "none"
         this.regionRemove = false;
         this.usedRegions = new Set([]);
+        this.nextColor = "#abc";
+        this.validWordTimeout = null;
         this.selectionValid = false;
         this.activex = undefined;
         this.activey = undefined;
@@ -24,6 +29,25 @@ export class UI {
     // selecting an existing word converts it into the SELECTION and set mode to "none"
     // ADDING: adds the selected empty cell to the SELECTION, if the cell belongs to an existing word, turn merge it to the SELECTION
     // REMOVING: removes the selected cell from the SELECTION, if the cell belongs to en existing word, merge it to the SELECTION, continue to REMOVE
+
+
+    nextRegionNumber() {
+        let r = 0;
+        while (this.usedRegions.has(r)) r++; 
+        return r;
+    }
+
+    colorForRegion(r) {
+        let phi = (1+Math.sqrt(5))/2;
+        let hue = (0.8*(phi*r) % 1 + 0.1)*360;
+        return `hsl(${hue} 100% 50%)`; 
+    }
+
+    setNextColor() {
+        let r = this.nextRegionNumber();
+        this.nextColor = this.colorForRegion(r);
+        return this.nextColor;
+    }
 
     getWordFromSelection() {
         this.selection.sort((a,b)=>{
@@ -45,8 +69,34 @@ export class UI {
         return false;
     }
 
+    cancelValidWordTimeout() {
+        if (this.validWordTimeout) {
+            clearTimeout(this.validWordTimeout);
+            this.validWordTimeout = null;
+        }
+    }
+
+    setValidWordTimeout() {
+        this.cancelValidWordTimeout();
+        console.log("Timeout set");
+        this.validWordTimeout = setTimeout(()=>{
+            console.log("Timeout fired")
+            if (this.selectionValid) {
+                console.log("calling setRegion()");
+                this.setRegion();
+                this.showRegions();
+                this.validWordTimeout = null;
+            }
+        },2000);
+    }
+
     showValidWord() {
         this.selectionValid = this.isSelectionWord();
+        if (this.selectionValid) {
+            this.setValidWordTimeout();
+        } else {
+            this.cancelValidWordTimeout();
+        }
     }
 
     // Return the index of the entry (or -1, it no such entry exists)
@@ -71,6 +121,7 @@ export class UI {
         }
     }
 
+    // adds a cell x,y to the selection (if not already in there)
     addToSelection(x,y) {
         x = Number(x);
         y = Number(y);
@@ -91,6 +142,7 @@ export class UI {
         }
     }
 
+    // removes a region and adds it to the current selection
     regionToSelection(region) {
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {
@@ -113,6 +165,7 @@ export class UI {
         return list;
     }
 
+    // takes the current selection and makes it into a region
     setRegion() {
         let r = 0;
         while (this.usedRegions.has(r)) r++;
@@ -310,10 +363,10 @@ export class UI {
                 let region = this.divs[x][y].getAttribute('region');
                 let color = "#aaaaaa";
                 if (region==-2) {
-                    color = this.selectionValid ? "#00ff00" : "#ff0000";
+                    color = this.selectionValid ? this.setNextColor() : "#aa0000";
                 }
                 if (region>=0) {
-                    color = `hsl(${360/10*region+20} 100% 50%)`;
+                    color = this.colorForRegion(region);
                 }
                 let svg = makeSVG(region==-2, color, nbrs);
                 let update = function(url, div) {
