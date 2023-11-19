@@ -31,7 +31,7 @@ export class UI {
             bottomright = nbrs[2][2];
 
         // From https://stackoverflow.com/questions/13069446/simple-fill-pattern-in-svg-diagonal-hatching
-        let filldef = !selected ? "" : '<pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="25" height="25"><rect x="-1" y="-1" width="27" height="27" fill="'+color+'" fill-rule="evenodd"/><path d="M-1,1 l2,-2 M0,25 l25,-25 M24,26 l2,-2" style="stroke:#ffffff88; stroke-width:8" /> </pattern>';
+        let filldef = !selected ? "" : '<pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="25" height="25"><rect x="-1" y="-1" width="27" height="27" fill="'+color+'" fill-rule="evenodd"/><path d="M-5,5 l10,-10 M-5,30 l35,-35 M20,30 l10,-10" style="stroke:#ffffff88; stroke-width:8" /> </pattern>';
         let fillUse = !selected ? color : "url(#diagonalHatch)"
 
         const margin = 10;
@@ -151,17 +151,7 @@ export class UI {
         }
 
         let showValidWord = ()=>{
-            for (let y=0; y<this.height; y++) {
-                for (let x=0; x<this.width; x++) {
-                    this.divs[x][y].classList.remove("isWord");
-                }
-            }
             this.selectionValid = isSelectionWord();
-            if (this.selectionValid) {
-                for (let s of this.selection) {
-                    this.divs[s[0]][s[1]].classList.add("isWord");
-                }
-            }
         }
 
         // Return the index of the entry (or -1, it no such entry exists)
@@ -182,11 +172,6 @@ export class UI {
                 // change element
                 let el = this.divs[x][y];
                 el.setAttribute('region', region);
-                el.classList.remove('selected');
-                if (region>=0) {
-                    el.classList.add('realWord');
-                }
-                // remove from array
                 this.selection.splice(i,1);
             }
         }
