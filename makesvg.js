@@ -1,6 +1,6 @@
 // nbrs is 3x3-Array with true/false if nbrs are present or not
 // selected is true/false
-function makeSVG(selected, color, nbrs = [[false, false, false],[false, true, false], [false, false, false]]) {
+function makeSVG(selected, valid, color, nbrs = [[false, false, false],[false, true, false], [false, false, false]]) {
 
     const top = nbrs[1][0],
         bottom = nbrs[1][2],
@@ -12,7 +12,8 @@ function makeSVG(selected, color, nbrs = [[false, false, false],[false, true, fa
         bottomright = nbrs[2][2];
 
     // From https://stackoverflow.com/questions/13069446/simple-fill-pattern-in-svg-diagonal-hatching
-    let filldef = !selected ? "" : '<pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="25" height="25"><rect x="-1" y="-1" width="27" height="27" fill="'+color+'" fill-rule="evenodd"/><path d="M-5,5 l10,-10 M-5,30 l35,-35 M20,30 l10,-10" style="stroke:#ffffff88; stroke-width:8" /> </pattern>';
+    const hatchColor = valid ? "#ffffff88" : "#00000088";
+    let filldef = !selected ? "" : `<pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="25" height="25"><rect x="-1" y="-1" width="27" height="27" fill="${color}" fill-rule="evenodd"/><path d="M-5,5 l10,-10 M-5,30 l35,-35 M20,30 l10,-10" style="stroke:${hatchColor}; stroke-width:8" /> </pattern>`;
     let fillUse = !selected ? color : "url(#diagonalHatch)"
 
     const margin = 10;

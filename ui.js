@@ -38,8 +38,8 @@ export class UI {
     }
 
     colorForRegion(r) {
-        let phi = (1+Math.sqrt(5))/2;
-        let hue = (0.8*(phi*r) % 1 + 0.1)*360;
+        let phi = (Math.sqrt(5)-1)/2;
+        let hue = (0.8*((phi*r)%1) + 0.1)*360;
         return `hsl(${hue} 100% 50%)`; 
     }
 
@@ -58,7 +58,6 @@ export class UI {
         for (let s of this.selection) {
             word += this.divs[s[0]][s[1]].innerText.toLowerCase();
         }
-        console.log(word);
         return word;
     }
 
@@ -78,11 +77,8 @@ export class UI {
 
     setValidWordTimeout() {
         this.cancelValidWordTimeout();
-        console.log("Timeout set");
         this.validWordTimeout = setTimeout(()=>{
-            console.log("Timeout fired")
             if (this.selectionValid) {
-                console.log("calling setRegion()");
                 this.setRegion();
                 this.showRegions();
                 this.validWordTimeout = null;
@@ -146,18 +142,19 @@ export class UI {
     regionToSelection(region) {
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {
-                if (this.divs[x][y].getAttribute('region')==region) {
+                if (Number(this.divs[x][y].getAttribute('region'))==region) {
                     this.addToSelection(x,y);
                 }
             }
         }
         this.usedRegions.delete(region);
     }
+
     getRegionList(region) {
         let list = [];
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {
-                if (this.divs[x][y].getAttribute('region')==region) {
+                if (Number(this.divs[x][y].getAttribute('region'))==region) {
                     list.push([x,y]);
                 }
             }
@@ -167,8 +164,7 @@ export class UI {
 
     // takes the current selection and makes it into a region
     setRegion() {
-        let r = 0;
-        while (this.usedRegions.has(r)) r++;
+        let r = this.nextRegionNumber();
         this.usedRegions.add(r);
         this.clearSelection(r);
     }
@@ -202,7 +198,7 @@ export class UI {
     activate(el) {
         let x = Number(el.getAttribute('x'));
         let y = Number(el.getAttribute('y'));
-        let region = el.getAttribute('region');
+        let region = Number(el.getAttribute('region'));
         //console.log(`activate at ${x},${y} with region==${region} in mode=${this.mode}, remove=${this.regionRemove} and selection=${this.selection}`);
         if (this.mode=="none") {
             if (region==-1) { // empty cell
@@ -342,14 +338,14 @@ export class UI {
 
     makeNbrList(x,y) {
         let nbrs = [[false, false, false], [false, false, false], [false, false, false]];
-        let region = this.divs[x][y].getAttribute('region');
+        let region = Number(this.divs[x][y].getAttribute('region'));
         if (region==-1) return nbrs;
         for (let dx=-1; dx<2; dx++) {
             for (let dy=-1; dy<2; dy++) {
                 let a = x+dx;
                 let b = y+dy;
                 if (a>=0 && b>=0 && a<this.width && b<this.height) {
-                    nbrs[dx+1][dy+1] = (this.divs[a][b].getAttribute('region')==region);
+                    nbrs[dx+1][dy+1] = (Number(this.divs[a][b].getAttribute('region'))==region);
                 }
             }
         }
@@ -360,15 +356,15 @@ export class UI {
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {                
                 let nbrs = this.makeNbrList(x,y);
-                let region = this.divs[x][y].getAttribute('region');
+                let region = Number(this.divs[x][y].getAttribute('region'));
                 let color = "#aaaaaa";
                 if (region==-2) {
-                    color = this.selectionValid ? this.setNextColor() : "#aa0000";
+                    color = this.selectionValid ? this.setNextColor() : "#aa8888";
                 }
                 if (region>=0) {
                     color = this.colorForRegion(region);
                 }
-                let svg = makeSVG(region==-2, color, nbrs);
+                let svg = makeSVG(region==-2, this.selectionValid, color, nbrs);
                 let update = function(url, div) {
                     if (div.style.backgroundImage!=`url('${url}')`) { // only if image changed
                         let i = new Image();

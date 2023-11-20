@@ -1,6 +1,4 @@
 import { WordList } from "./wordlist.js";
-//
-// TODO: Random generator seeded from time (2 mins intervals)
 
 export class Model {
 
@@ -18,6 +16,27 @@ export class Model {
         this.regionNumber = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
         // Number of regions
         this.numRegions = 1;
+
+        let minutes = Math.floor(new Date().getTime() / 120000);  // new puzzle every 2 minutes
+        this.random = this.mulberry32(minutes | 1);
+        console.log(`minutes = ${minutes} this.random()=${this.random()}`);
+        this.randomRegions();
+        while (true) {
+            this.fillRegions();
+            if (this.solve()==1) {
+                break;
+            }
+        }
+    }
+
+    // From https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+    mulberry32(a) {
+        return function() {
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
     }
 
     // Gets the size of tree at node cur, when ignoring the edge between cur and prev
@@ -121,7 +140,7 @@ export class Model {
             }
         }
         while (edges.length>0) {
-            let i = Math.floor(Math.random()*edges.length);
+            let i = Math.floor(this.random()*edges.length);
             let e = edges.splice(i,1)[0];
             let c0 = components[e[0]];
             let c1 = components[e[1]];
@@ -145,7 +164,7 @@ export class Model {
             if (bailout<=0) return false;
             //console.log(sizes);
             //console.log(Math.max(...sizes));
-            let e = Math.floor(Math.random()*tree.length);
+            let e = Math.floor(this.random()*tree.length);
             let starte = e;
             while (true) {
                 let [u,v] = tree[e];
@@ -204,7 +223,7 @@ export class Model {
             numLettersPerRegion[r] = numLetters;
             numPerLength[numLetters]++;
         }
-        let lenlist = this.wordlist.randomCollection(numPerLength);
+        let lenlist = this.wordlist.randomCollection(numPerLength, this.random);
         for (let r=0; r<this.numRegions; r++) {
             let word = lenlist[numLettersPerRegion[r]].splice(0,1)[0];
             let numLetters = 0;
