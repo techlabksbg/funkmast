@@ -1,4 +1,4 @@
 
 put:
-	rsync *.js *.css *.html ivo@mx:/var/www/html/funkmast/.
+	rsync -avrz *.js *.css *.html ivo@mx:/var/www/html/funkmast/.
 
