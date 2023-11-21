@@ -19,6 +19,11 @@ body {
     font-size: min(4vh, 8vw);
 }
 
+button {
+    width:100%;
+    font-size: min(3vh, 6vw);
+}
+
 
 @media print {
     #griddiv {

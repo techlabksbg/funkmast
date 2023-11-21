@@ -58,6 +58,7 @@ export class UI {
         for (let s of this.selection) {
             word += this.divs[s[0]][s[1]].innerText.toLowerCase();
         }
+        document.getElementById('wordbutton').innerText = word.toUpperCase();
         return word;
     }
 

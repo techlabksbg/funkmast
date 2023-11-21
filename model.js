@@ -19,7 +19,6 @@ export class Model {
 
         let minutes = Math.floor(new Date().getTime() / 120000);  // new puzzle every 2 minutes
         this.random = this.mulberry32(minutes | 1);
-        console.log(`minutes = ${minutes} this.random()=${this.random()}`);
         this.randomRegions();
         while (true) {
             this.fillRegions();
