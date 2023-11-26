@@ -20,6 +20,7 @@ export class UI {
         this.selectionValid = false;
         this.activex = undefined;
         this.activey = undefined;
+        document.getElementById('wordbutton').addEventListener('click', ()=>this.submitWord());
     }
 
 
@@ -30,6 +31,21 @@ export class UI {
     // ADDING: adds the selected empty cell to the SELECTION, if the cell belongs to an existing word, turn merge it to the SELECTION
     // REMOVING: removes the selected cell from the SELECTION, if the cell belongs to en existing word, merge it to the SELECTION, continue to REMOVE
 
+    submitWord() {
+        let word = document.getElementById('wordbutton').innerText.toLowerCase();
+        console.log(`word=${word} length=${word.length} `);
+        if (word.length>=this.model.minchars && word.length<=this.model.maxchars) {            
+            let url=`words.php?word=${word}&type=${this.selectionValid?"bad":"good"}`;
+            console.log(url);
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() { 
+                if (xmlHttp.readyState == 4)
+                    console.log(xmlHttp.responseText);
+            }
+            xmlHttp.open("GET", url, true); // true for asynchronous 
+            xmlHttp.send(null);
+        }
+    }
 
     nextRegionNumber() {
         let r = 0;
@@ -58,7 +74,14 @@ export class UI {
         for (let s of this.selection) {
             word += this.divs[s[0]][s[1]].innerText.toLowerCase();
         }
-        document.getElementById('wordbutton').innerText = word.toUpperCase();
+        let text = word.toUpperCase();
+        if (word.length<this.model.minchars) {
+            text = "Wort zu kurz";
+        }
+        if (word.length>this.model.maxchars) {
+            text = "Wort zu lang";
+        }
+        document.getElementById('wordbutton').innerText = text;
         return word;
     }
 
