@@ -18,6 +18,15 @@ body {
     font-weight: bold;
     font-size: min(4vh, 8vw);
 }
+/* from https://stackoverflow.com/questions/35990304/how-to-position-overlay-fixed-div-to-the-center-with-css */
+#overlay {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    color: white; background: #666666; opacity: .8;
+    z-index: 1000;
+}
 
 button {
     width:100%;

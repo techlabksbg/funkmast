@@ -9,6 +9,14 @@ export class Model {
         this.maxchars = 8;
         this.wordlist = new WordList();
 
+        let minutes = Math.floor(new Date().getTime() / 60000);  // new puzzle every minute
+        this.random = this.mulberry32(minutes | 1);
+
+        this.preparePuzzleGeneration();
+    }
+
+    preparePuzzleGeneration() {
+        this.validPuzzle = false;
         // Two-dimensional Array letters[x][y], x is the column, y the row
         this.letters = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(""));
 
@@ -19,14 +27,43 @@ export class Model {
 
         let minutes = Math.floor(new Date().getTime() / 120000);  // new puzzle every 2 minutes
         this.random = this.mulberry32(minutes | 1);
-        this.getBestRegions(20);
-        while (true) {
-            this.fillRegions();
-            if (this.solve()==1) {
-                break;
-            }
-        }
+
+        // Number of region sets generated
+        this.totalRegionSets = 10;
+        this.numRegionSets = 0;
+        this.bestScore = 0;
+        this.bestRegions = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
+        this.solveCompletion = 0.0;
     }
+
+    // Only perform "small" steps towards a unique puzzle
+    // This should prevent the page from freezing and can be used to display progress
+    generatePuzzleStepByStep() {
+        // Generate enough regions to choose the best from.
+        if (this.numRegionSets<this.totalRegionSets) {
+            if (this.maybeRandomRegions()) {
+                let score = this.rateRegions();
+                this.numRegionSets+=1;
+                if (score>this.bestScore) {
+                    this.bestScore = score;
+                    for (let x=0; x<this.width; x++) {
+                        for (let y=0; y<this.height; y++) {
+                            this.bestRegions[x][y] = this.regionNumber[x][y];
+                        }
+                    }
+                }
+            }
+            return {'task':'regions', 'completion':this.numRegionSets/this.totalRegionSets};
+        }
+        this.fillRegions();
+        if (this.solve()==1) {
+            this.validPuzzle = true;
+            return {'task':'done', 'completion':1.0};
+        }
+        this.solveCompletion = 1 - 0.5*(1-this.solveCompletion);
+        return {'task':'uniqueness', 'completion':this.solveCompletion};
+    }
+
 
     getBestRegions(n) {
         let bestScore = 0;

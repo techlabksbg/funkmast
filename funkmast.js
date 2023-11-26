@@ -6,6 +6,4 @@ window.addEventListener('load', function() {
 
     let model = new Model(7, 12);
     let ui = new UI(model);
-    ui.showRegions();
-
 });

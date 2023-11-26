@@ -10,7 +10,6 @@ export class UI {
         this.model = model;
         this.width = model.width;
         this.height = model.height;
-        this.initGrid();
         this.selection = [];
         this.mode = "none"
         this.regionRemove = false;
@@ -21,7 +20,22 @@ export class UI {
         this.activex = undefined;
         this.activey = undefined;
         document.getElementById('wordbutton').addEventListener('click', ()=>this.submitWord());
+        this.overlay = document.getElementById('overlay')
+        let genStep = ()=>{
+            let res = this.model.generatePuzzleStepByStep();
+            if (!this.model.validPuzzle) {
+                this.overlay.innerText = `${res['task']} at ${Math.round(res['completion']*100,2)}%`;
+                setTimeout(genStep, 100);
+            } else {
+                this.overlay.style.display = "none";
+                this.initGrid();
+                this.showRegions();
+            }
+        }
+        genStep();
     }
+
+    
 
 
     // mode is one of "none", "adding" and "removing". Ending a drag resets the mode to "none".
