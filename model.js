@@ -19,13 +19,59 @@ export class Model {
 
         let minutes = Math.floor(new Date().getTime() / 120000);  // new puzzle every 2 minutes
         this.random = this.mulberry32(minutes | 1);
-        this.randomRegions();
+        this.getBestRegions(20);
         while (true) {
             this.fillRegions();
             if (this.solve()==1) {
                 break;
             }
         }
+    }
+
+    getBestRegions(n) {
+        let bestScore = 0;
+        let bestRegions = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
+        for (let i=0; i<n; i++) {
+            this.randomRegions();
+            let score = this.rateRegions();
+            if (score>bestScore) {
+                bestScore = score;
+                for (let x=0; x<this.width; x++) {
+                    for (let y=0; y<this.height; y++) {
+                        bestRegions[x][y] = this.regionNumber[x][y];
+                    }
+                }
+            }
+        }
+        for (let x=0; x<this.width; x++) {
+            for (let y=0; y<this.height; y++) {
+                this.regionNumber[x][y] = bestRegions[x][y];
+            }
+        }
+    }
+
+    rateRegions() {
+        // less regions means bigger region, which is better
+        let score = Math.pow(this.width*this.height/4-this.numRegions,2);
+        for (let r=0; r<this.numRegions; r++) {
+            // Get set of coordinates
+            let coords=[];
+            let bbox = [[this.width, this.height], [-1,-1]];
+            for (let x=0; x<this.width; x++) {
+                for (let y=0; y<this.height; y++) {
+                    if (this.regionNumber[x][y]==r) {
+                        coords.push([x,y]);
+                        if (x<bbox[0][0]) bbox[0][0]=x;
+                        if (y<bbox[0][1]) bbox[0][1]=y;
+                        if (x>bbox[1][0]) bbox[1][0]=x;
+                        if (y>bbox[1][1]) bbox[1][1]=y;
+                    }
+                }
+            }
+            // add score for region (stright lines are not good)
+            score += (bbox[1][0]-bbox[0][0]-1)*(bbox[1][1]-bbox[0][1]-1)*5;
+        }
+        return score;
     }
 
     // From https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
