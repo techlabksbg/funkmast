@@ -68,7 +68,7 @@ body {
 }
 
 button {
-    width:min(100vw, 50vh);
+    width:min(50vw, 25vh);
     font-size: min(3vh, 6vw);
     background-color: #222;
     color:white;

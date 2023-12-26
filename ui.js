@@ -14,6 +14,7 @@ class UI {
         this.newpuzzle = document.getElementById('newpuzzle');
         this.wordbutton = document.getElementById('wordbutton');
         this.hint = document.getElementById('hint');
+        this.controls = document.getElementById('controls');
 
         this.makeNewPuzzle();
 
@@ -35,10 +36,8 @@ class UI {
         this.activex = undefined;
         this.activey = undefined;
         this.winner.classList.add("hidden");
-        this.wordbutton.classList.add("hidden");
-        this.newpuzzle.classList.add("hidden");
         this.overlay.classList.remove("hidden");
-        this.hint.classList.add("hidden");
+        this.controls.style.display="none";
         let genStep = ()=>{
             let res = this.model.generatePuzzleStepByStep();
             if (!this.model.validPuzzle) {
@@ -48,9 +47,7 @@ class UI {
                 this.overlay.classList.add("hidden");
                 this.initGrid();
                 this.showRegions();
-                this.wordbutton.classList.remove("hidden");
-                this.newpuzzle.classList.remove("hidden");
-                this.hint.classList.remove("hidden");
+                this.controls.style.display="flex";
                 this.wordbutton.innerText = "Wort auswählen";
             }
         }
