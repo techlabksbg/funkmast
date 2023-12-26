@@ -22,8 +22,9 @@ function makeSVG(selected, valid, color, nbrs = [[false, false, false],[false, t
     let path = [];
 
     //////////////////////////////////////
-    // Foreign code, license unclear
-    // shamelessly copied from https://www.andrewt.net/puzzles/cell-tower/player/common/blob-svg.js
+    // Foreign code, used with permission 
+    // shamelessly copied and adapted from 
+    // https://www.andrewt.net/puzzles/cell-tower/player/common/blob-svg.js
     ////////////////////////////////////////////
 
     // start in top left

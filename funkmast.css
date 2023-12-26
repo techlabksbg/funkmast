@@ -1,12 +1,15 @@
 body {
     margin: 0;
     padding: 0;
+    background-color: black;
+    color:white;
 }
 
 #griddiv {
     display:grid;
     grid-template-columns: repeat(var(--spalten),1fr);
     width: min(50vh, 100vw);
+    color:black;
 }
 
 #griddiv > div{
@@ -24,13 +27,55 @@ body {
     top:50%;
     left:50%;
     transform:translate(-50%, -50%);
-    color: white; background: #666666; opacity: .8;
+    color: white; background: #a8a8a8; opacity: .8;
+    font-size: min(3vh, 6vw);
+    padding:min(4vw, 2vh);
+    border-radius: min(2vw, 1vh);
+    text-align: center;
+    width:min(80vw, 40vh);
     z-index: 1000;
 }
 
+#winner {
+    position:absolute;
+    top:20%;
+    left:30%;
+    z-index: 1000;
+    font-family: sans-serif;
+    font-size: min(10vh, 20vw);
+    color:rgba(255, 255, 255, 0.9);
+    text-shadow: min(0.5vh, 1vh)   min(0.5vh, 1vh)  min(1vh, 2vh) rgb(255, 0, 0);
+    rotate: -60deg;
+    transform:translate(-50%, -50%);
+    /*width:min(80vw, 40vh);*/
+}
+
+#controls {
+    width:min(100vw, 50vh);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: space-between;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size:min(8vw, 4vh);
+}
+
+#controls > div {
+    display:flex;
+}
+
 button {
-    width:100%;
+    width:min(100vw, 50vh);
     font-size: min(3vh, 6vw);
+    background-color: #222;
+    color:white;
+}
+
+.hidden {
+    display:none;
 }
 
 

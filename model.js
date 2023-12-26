@@ -434,7 +434,6 @@ export class Model {
     }
 
 
-    // Work in progress: Attempt to solve a puzzle
     solve() {
         let prefixtree = {};
         for (let word of this.wordlist.list) {

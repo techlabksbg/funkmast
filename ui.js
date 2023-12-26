@@ -1,15 +1,30 @@
-import {makeSVG} from "./makesvg.js"
+import {makeSVG} from "./makesvg.js";
+import {Model} from "./model.js";
 
-// TODO
-// submit missing and bad words
-//
-export class UI {
+export {UI};
+
+class UI {
     
-    constructor(model) {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
         this.griddiv = document.getElementById("griddiv");
-        this.model = model;
-        this.width = model.width;
-        this.height = model.height;
+        this.overlay = document.getElementById('overlay');
+        this.winner = document.getElementById('winner');
+        this.newpuzzle = document.getElementById('newpuzzle');
+        this.wordbutton = document.getElementById('wordbutton');
+        this.hint = document.getElementById('hint');
+
+        this.makeNewPuzzle();
+
+        this.wordbutton.addEventListener('click', ()=>this.submitWord());
+        this.newpuzzle.addEventListener('click', ()=>this.makeNewPuzzle());
+        this.hint.addEventListener('click', ()=>this.showHint());
+    }
+
+    makeNewPuzzle() {
+        this.griddiv.innerHTML = "";
+        this.model = new Model(this.width, this.height);
         this.selection = [];
         this.mode = "none"
         this.regionRemove = false;
@@ -19,23 +34,28 @@ export class UI {
         this.selectionValid = false;
         this.activex = undefined;
         this.activey = undefined;
-        document.getElementById('wordbutton').addEventListener('click', ()=>this.submitWord());
-        this.overlay = document.getElementById('overlay')
+        this.winner.classList.add("hidden");
+        this.wordbutton.classList.add("hidden");
+        this.newpuzzle.classList.add("hidden");
+        this.overlay.classList.remove("hidden");
+        this.hint.classList.add("hidden");
         let genStep = ()=>{
             let res = this.model.generatePuzzleStepByStep();
             if (!this.model.validPuzzle) {
                 this.overlay.innerText = `${res['task']} at ${Math.round(res['completion']*100,2)}%`;
                 setTimeout(genStep, 100);
             } else {
-                this.overlay.style.display = "none";
+                this.overlay.classList.add("hidden");
                 this.initGrid();
                 this.showRegions();
+                this.wordbutton.classList.remove("hidden");
+                this.newpuzzle.classList.remove("hidden");
+                this.hint.classList.remove("hidden");
+                this.wordbutton.innerText = "Wort auswählen";
             }
         }
         genStep();
-    }
-
-    
+    } 
 
 
     // mode is one of "none", "adding" and "removing". Ending a drag resets the mode to "none".
@@ -45,6 +65,64 @@ export class UI {
     // ADDING: adds the selected empty cell to the SELECTION, if the cell belongs to an existing word, turn merge it to the SELECTION
     // REMOVING: removes the selected cell from the SELECTION, if the cell belongs to en existing word, merge it to the SELECTION, continue to REMOVE
 
+    removeWrongWords() {
+        let change = false;
+        for (let r of this.usedRegions) {
+            outerloop: for (let y=0; y<this.height; y++) {
+                for (let x=0; x<this.width; x++) {
+                    if (Number(this.divs[x][y].getAttribute('region'))==r) {
+                        //console.log(`checking at ${x},${y} for region ${r}`);
+                        let otherRegion = this.model.regionNumber[x][y];
+                        for (let yy=0; yy<this.height; yy++) {
+                            for (let xx=0; xx<this.width; xx++) {
+                                let ownRegion = (Number(this.divs[xx][yy].getAttribute('region'))==r);
+                                let modelRegion = (this.model.regionNumber[xx][yy]==otherRegion);
+                                if (ownRegion!=modelRegion) { // logical XOR ;-)
+                                    this.removeRegion(r);
+                                    change = true;
+                                    break outerloop;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return change;
+    }
+
+    addCorrectWord() {
+        this.clearSelection();
+        correctWordLoops: for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {
+                if (Number(this.divs[x][y].getAttribute('region'))==-1) {
+                    let r = this.model.regionNumber[x][y];
+                    for (let yy=0; yy<this.height; yy++) {
+                        for (let xx=0; xx<this.width; xx++) {
+                            if (this.model.regionNumber[xx][yy]==r) {
+                                this.addToSelection(xx,yy);
+                            }
+                        }
+                    }
+                    break correctWordLoops;
+                }
+            }
+        }
+        this.setRegion();
+    }
+
+    showHint() {
+        if (!this.removeWrongWords()) {
+            this.addCorrectWord();
+        }
+        if (this.isComplete()) {
+            this.winner.classList.remove("hidden");
+        }
+        this.showRegions();
+    }
+
+    // Submits a word (missing or correct) for later
+    // inclusion or rejection into or from the wordlist
     submitWord() {
         let word = document.getElementById('wordbutton').innerText.toLowerCase();
         console.log(`word=${word} length=${word.length} `);
@@ -61,24 +139,28 @@ export class UI {
         }
     }
 
+    // Next free region number
     nextRegionNumber() {
         let r = 0;
         while (this.usedRegions.has(r)) r++; 
         return r;
     }
 
+    // Computes the region based on its number
     colorForRegion(r) {
         let phi = (Math.sqrt(5)-1)/2;
         let hue = (0.8*((phi*r)%1) + 0.1)*360;
         return `hsl(${hue} 100% 50%)`; 
     }
 
+    // Computes the next region color
     setNextColor() {
         let r = this.nextRegionNumber();
         this.nextColor = this.colorForRegion(r);
         return this.nextColor;
     }
 
+    // Builds the word from the current selection
     getWordFromSelection() {
         this.selection.sort((a,b)=>{
             //console.log(`(${a})-(${b}) = ${a[0]+a[1]*this.width}-${b[0]+b[1]*this.width}=${a[0]+a[1]*this.width - (b[0]+b[1]*this.width)}`);
@@ -99,6 +181,7 @@ export class UI {
         return word;
     }
 
+    // Checks if the current selection is a valid word
     isSelectionWord() {
         if (this.model.connected(this.selection)) {
             return this.model.wordlist.valid(this.getWordFromSelection());
@@ -106,6 +189,7 @@ export class UI {
         return false;
     }
 
+    // Clears the automarking of valid words
     cancelValidWordTimeout() {
         if (this.validWordTimeout) {
             clearTimeout(this.validWordTimeout);
@@ -113,7 +197,8 @@ export class UI {
         }
     }
 
-    setValidWordTimeout() {
+    // Adds a valid word as a definitve region after a timeout
+    setValidWordTimeout(ms=2000) {
         this.cancelValidWordTimeout();
         this.validWordTimeout = setTimeout(()=>{
             if (this.selectionValid) {
@@ -121,19 +206,38 @@ export class UI {
                 this.showRegions();
                 this.validWordTimeout = null;
             }
-        },2000);
+        },ms);
     }
 
+    // Checks if all fields are part of a region (and thus the puzzle is solved)
+    isComplete() {
+        for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {
+                if (Number(this.divs[x][y].getAttribute('region'))==-1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // Checks validity and shows it (plus winning, if so)
     showValidWord() {
         this.selectionValid = this.isSelectionWord();
         if (this.selectionValid) {
-            this.setValidWordTimeout();
+            if (this.isComplete()) {
+                this.setValidWordTimeout(10);
+                setTimeout(()=>this.winner.classList.remove("hidden"), 50);
+            } else {
+                this.setValidWordTimeout();
+            }
         } else {
             this.cancelValidWordTimeout();
         }
     }
 
-    // Return the index of the entry (or -1, it no such entry exists)
+    // Return the index of the field at x,y
+    // in the selection array (or -1, it no such entry exists)
     inSelection(x,y) {
         let res = -1;
         this.selection.forEach((s,i)=>{
@@ -144,6 +248,7 @@ export class UI {
         return res;
     }
 
+    // Removes a field from the selection array
     removeFromSelection(x,y, region=-1) {
         let i = this.inSelection(x,y);
         //console.log(`remove ${x},${y} at index ${i}, this.selection=${this.selection}`)
@@ -205,6 +310,12 @@ export class UI {
         let r = this.nextRegionNumber();
         this.usedRegions.add(r);
         this.clearSelection(r);
+    }
+
+    // Removes a region completely
+    removeRegion(r) {
+        this.regionToSelection(r);
+        this.clearSelection();
     }
 
     // Unselects all cells from selection not reachable from (x,y)
