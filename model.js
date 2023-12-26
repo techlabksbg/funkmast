@@ -9,7 +9,7 @@ export class Model {
         this.maxchars = 8;
         this.wordlist = new WordList();
 
-        let minutes = Math.floor(new Date().getTime() / 60000);  // new puzzle every minute
+        let minutes = Math.floor(new Date().getTime() / 10000);  // new puzzle every 20 seconds
         this.random = this.mulberry32(minutes | 1);
 
         this.preparePuzzleGeneration();
