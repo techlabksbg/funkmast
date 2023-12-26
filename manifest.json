@@ -1,0 +1,31 @@
+{
+    "name": "Funkmast",
+    "short_name": "Funkmast",
+    "id": "index.html?v0",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#222",
+    "theme_color": "#999",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "icon512.png",
+        "type": "image/png", "sizes": "512x512"
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "screenshot.png",
+        "type": "image/png",
+        "sizes": "538x975",
+        "form_factor": "narrow"
+      },
+      {
+        "src": "screenshot.png",
+        "type": "image/png",
+        "sizes": "538x975",
+        "form_factor": "wide"
+      }
+    ]
+  }
+  
