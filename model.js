@@ -23,21 +23,29 @@ export class Model {
             letters: this.letters,
             regionNumber: this.regionNumber,
         });
-        window.localStorage.setItem('funkmaststate', json);
+        console.log(`Model saved`);
+        console.log(json);
+        window.localStorage.setItem('funkmastmodel', json);
+    }
+
+    clear() {
+        window.localStorage.removeItem('funkmastmodel');
     }
 
     /* Load state from localStorage */
     load() {
-        let json = window.localStorage.getItem('funkmaststate');
+        let json = window.localStorage.getItem('funkmastmodel');
         if (!json || json=="") {
-            window.localStorage.removeItem('funkmaststate');
+            this.clear();
             return false;
         }
         json = JSON.parse(json);
         if (json.width!=this.width || json.height!=this.height) {
-            window.localStorage.removeItem('funkmaststate');
+            this.clear();
             return false;
         }
+        console.log("loading model");
+        console.log(json);
         this.letters = json.letters;
         this.regionNumber = json.regionNumber;
         this.validPuzzle = true;
@@ -72,7 +80,8 @@ export class Model {
     // Only perform "small" steps towards a unique puzzle
     // This should prevent the page from freezing and can be used to display progress
     generatePuzzleStepByStep() {
-        if (this.validPuzzle) {
+        if (this.validPuzzle){ 
+            this.save();
             return {'task':'done', 'completion':1.0};
         }
         // Generate enough regions to choose the best from.
@@ -94,6 +103,7 @@ export class Model {
         this.fillRegions();
         if (this.solve()==1) {
             this.validPuzzle = true;
+            this.save();
             return {'task':'done', 'completion':1.0};
         }
         this.solveCompletion = 1 - 0.5*(1-this.solveCompletion);

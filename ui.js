@@ -19,7 +19,13 @@ class UI {
         this.makeNewPuzzle();
 
         this.wordbutton.addEventListener('click', ()=>this.submitWord());
-        this.newpuzzle.addEventListener('click', ()=>this.makeNewPuzzle());
+        this.newpuzzle.addEventListener('click', ()=>{
+            if (this.gameIsWon) {
+                this.model.clear();
+            }
+            this.clear(); 
+            this.makeNewPuzzle()
+        });
         this.hint.addEventListener('click', ()=>this.showHint());
     }
 
@@ -36,6 +42,7 @@ class UI {
         this.activex = undefined;
         this.activey = undefined;
         this.winner.classList.add("hidden");
+        this.gameIsWon = false;
         this.overlay.classList.remove("hidden");
         this.controls.style.display="none";
         let genStep = ()=>{
@@ -46,7 +53,9 @@ class UI {
             } else {
                 this.overlay.classList.add("hidden");
                 this.initGrid();
+                this.load();
                 this.showRegions();
+                this.save();
                 this.controls.style.display="flex";
                 this.wordbutton.innerText = "Wort auswählen";
             }
@@ -54,6 +63,42 @@ class UI {
         genStep();
     } 
 
+    clear() {
+        window.localStorage.removeItem('funkmastui');
+    }
+
+    load() {
+        let json = window.localStorage.getItem('funkmastui');
+        if (!json || json=="") {
+            return false;
+        }
+        json = JSON.parse(json);
+        if (!json.regions || !json.usedRegions) {
+            this.clear();
+            return false;
+        }
+        console.log("Loading UI");
+        console.log(json);
+        for (let y=0; y<this.height; y++) {
+            for (let x=0; x<this.width; x++) {                
+                this.divs[x][y].setAttribute('region', json.regions[x][y]);
+            }
+        }
+        this.usedRegions = new Set(json.usedRegions);
+        return true;
+    }
+
+    save() {
+        let regions = this.divs.map(col=>
+            col.map(div=>Math.max(-1,Number(div.getAttribute('region')))));
+        let json = JSON.stringify({
+            regions:regions,
+            usedRegions: Array.from(this.usedRegions),
+        });
+        console.log("Saving UI:");
+        console.log(regions);
+        window.localStorage.setItem('funkmastui', json);
+    }
 
     // mode is one of "none", "adding" and "removing". Ending a drag resets the mode to "none".
     // selecting an empty cell starts ADDING, clears the selection if not connected
@@ -114,6 +159,9 @@ class UI {
         }
         if (this.isComplete()) {
             this.winner.classList.remove("hidden");
+            this.clear();
+            this.model.clear();
+            this.gameIsWon = true;
         }
         this.showRegions();
     }
@@ -525,7 +573,9 @@ class UI {
                 update(svg, this.divs[x][y]);
             }
         }
-        this.model.save();
+        if (updated && !this.gameIsWon) {
+            this.save();
+        }
     }
 
 }

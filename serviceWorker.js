@@ -1,4 +1,4 @@
-// Version 0.01
+// Version 2024-04-15 10:55:48 
 const cacheName = "funkmast"
 const assets = [
   "index.html",
