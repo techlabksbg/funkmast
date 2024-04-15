@@ -499,6 +499,7 @@ class UI {
     }
 
     showRegions() {
+        let updated = false;
         for (let y=0; y<this.height; y++) {
             for (let x=0; x<this.width; x++) {                
                 let nbrs = this.makeNbrList(x,y);
@@ -518,11 +519,13 @@ class UI {
                             div.style.backgroundImage = `url('${url}')`;
                         }, {once:true});
                         i.src = url;
+                        updated = true;
                     }
                 };
                 update(svg, this.divs[x][y]);
             }
         }
+        this.model.save();
     }
 
 }

@@ -15,6 +15,35 @@ export class Model {
         this.preparePuzzleGeneration();
     }
 
+    /* Save state to localStorage */
+    save() {        
+        let json = JSON.stringify({
+            width:this.width,
+            height:this.height,
+            letters: this.letters,
+            regionNumber: this.regionNumber,
+        });
+        window.localStorage.setItem('funkmaststate', json);
+    }
+
+    /* Load state from localStorage */
+    load() {
+        let json = window.localStorage.getItem('funkmaststate');
+        if (!json || json=="") {
+            window.localStorage.removeItem('funkmaststate');
+            return false;
+        }
+        json = JSON.parse(json);
+        if (json.width!=this.width || json.height!=this.height) {
+            window.localStorage.removeItem('funkmaststate');
+            return false;
+        }
+        this.letters = json.letters;
+        this.regionNumber = json.regionNumber;
+        this.validPuzzle = true;
+        return true;
+    }
+
     preparePuzzleGeneration() {
         this.validPuzzle = false;
         // Two-dimensional Array letters[x][y], x is the column, y the row
@@ -34,11 +63,18 @@ export class Model {
         this.bestScore = 0;
         this.bestRegions = new Array(this.width).fill(0).map((e) => (new Array(this.height)).fill(0));
         this.solveCompletion = 0.0;
+
+        if (this.load()) {
+            this.validPuzzle = true;
+        }
     }
 
     // Only perform "small" steps towards a unique puzzle
     // This should prevent the page from freezing and can be used to display progress
     generatePuzzleStepByStep() {
+        if (this.validPuzzle) {
+            return {'task':'done', 'completion':1.0};
+        }
         // Generate enough regions to choose the best from.
         if (this.numRegionSets<this.totalRegionSets) {
             if (this.maybeRandomRegions()) {
